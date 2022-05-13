@@ -1,0 +1,60 @@
+package business
+
+import (
+	"bytes"
+	"crypto/sha256"
+	"fmt"
+	"math/big"
+)
+
+type ProofOfWork struct {
+	Block  *Block   // block to validate
+	Target *big.Int // target hash
+}
+
+// TargetBit difficulty
+const TargetBit = 16
+
+func NewProofOfWork(block *Block) *ProofOfWork {
+	target := big.NewInt(1)
+	target = target.Lsh(target, 256-TargetBit)
+	return &ProofOfWork{block, target}
+}
+
+func (pow *ProofOfWork) run() ([]byte, int64) {
+	nuance := 0
+	hashInt := new(big.Int)
+	var hash [32]byte
+	for true {
+		dataBytes := pow.prepareBlockDataWithNuance(int64(nuance))
+		hash = sha256.Sum256(dataBytes)
+		hashInt.SetBytes(hash[:])
+		if pow.Target.Cmp(hashInt) > 0 {
+			fmt.Printf("nuance=%d, hash=%x\n", nuance, hash)
+			break
+		}
+		nuance++
+	}
+	return hash[:], int64(nuance)
+}
+
+func (pow *ProofOfWork) prepareBlockDataWithNuance(nuance int64) []byte {
+	b := pow.Block
+	heightBytes := getIntBytes(b.Height)
+	timeBytes := getIntBytes(b.TimeStamp)
+	nuanceBytes := getIntBytes(nuance)
+	data := bytes.Join([][]byte{
+		heightBytes,
+		timeBytes,
+		nuanceBytes,
+		b.PrevBlockHash,
+		b.Data,
+	}, []byte{})
+	return data
+}
+
+func (pow *ProofOfWork) isValid() bool {
+	hashInt := new(big.Int)
+	hashInt.SetBytes(pow.Block.Hash)
+	return pow.Target.Cmp(hashInt) > 0
+}

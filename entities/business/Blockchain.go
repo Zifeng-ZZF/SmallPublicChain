@@ -1,4 +1,4 @@
-package objects
+package business
 
 type Blockchain struct {
 	Chain []*Block

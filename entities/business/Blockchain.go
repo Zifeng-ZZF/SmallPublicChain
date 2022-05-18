@@ -1,17 +1,19 @@
 package business
 
 import (
+	"fmt"
 	"github.com/boltdb/bolt"
 	"log"
+	"math/big"
 	"os"
 	"smallPublicChain/entities/Persistence"
 )
 
-const DBFullName = "entities/Persistence" + Persistence.DBName
+const DBFullName = "entities/Persistence/" + Persistence.DBName
 
 type Blockchain struct {
-	tip     []byte // last block's Hash
-	blockDB *bolt.DB
+	Tip     []byte // last block's Hash
+	BlockDB *bolt.DB
 }
 
 func CreateBlockChain(genesisDataStr string) *Blockchain {
@@ -73,13 +75,14 @@ func getBlockChainFromDB() *Blockchain {
 		log.Panic("Fail to read block chain")
 	}
 
-	return &Blockchain{lastBlockBytes, db}
+	lastBlock := DeSerializeBlock(lastBlockBytes)
+	return &Blockchain{lastBlock.Hash, db}
 }
 
 func (bc *Blockchain) AddNewBlock(data string) {
-	err := bc.blockDB.Update(func(tx *bolt.Tx) error {
+	err := bc.BlockDB.Update(func(tx *bolt.Tx) error {
 		bucket := tx.Bucket([]byte(Persistence.TableName))
-		lastBlockBytes := bucket.Get(bc.tip)
+		lastBlockBytes := bucket.Get(bc.Tip)
 		lastBlock := DeSerializeBlock(lastBlockBytes)
 		block := NewBlock(data, lastBlock.Hash, lastBlock.Height+1)
 		if bucket != nil {
@@ -89,7 +92,7 @@ func (bc *Blockchain) AddNewBlock(data string) {
 				log.Panic("Put error")
 			}
 			e = bucket.Put([]byte("l"), blockBytes)
-			bc.tip = block.Hash
+			bc.Tip = block.Hash
 		}
 		return nil
 	})
@@ -98,7 +101,31 @@ func (bc *Blockchain) AddNewBlock(data string) {
 	}
 }
 
+func (bc *Blockchain) GetIterator() *BlockChainIterator {
+	return &BlockChainIterator{CurrentHash: bc.Tip, BlockDB: bc.BlockDB}
+}
+
 func dbExist() bool {
-	_, err := os.Stat(Persistence.DBName)
+	_, err := os.Stat(DBFullName)
 	return !os.IsNotExist(err)
+}
+
+func (bc *Blockchain) PrintChain() {
+	it := bc.GetIterator()
+	var hashInt = new(big.Int)
+	var zeroInt = big.NewInt(0)
+	for {
+		cur := it.Next()
+		fmt.Printf("\nPrevHash=%x\n", cur.PrevBlockHash)
+		fmt.Printf("CurrHash=%x\n", cur.Hash)
+		fmt.Printf("Height=%d\n", cur.Height)
+		fmt.Printf("TimeStamp=%d\n", cur.TimeStamp)
+		fmt.Printf("Nuance=%d\n", cur.Nuance)
+		fmt.Printf("Data=%s\n", cur.Data)
+
+		hashInt.SetBytes(cur.PrevBlockHash)
+		if hashInt.Cmp(zeroInt) == 0 {
+			break
+		}
+	}
 }

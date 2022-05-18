@@ -1,6 +1,9 @@
 package business
 
 import (
+	"bytes"
+	"encoding/gob"
+	"log"
 	"time"
 )
 
@@ -40,4 +43,25 @@ func NewBlock(data string, prevBlock []byte, height int64) *Block {
 
 func CreateGenesisBlock(data string) *Block {
 	return NewBlock(data, make([]byte, 32, 32), 0)
+}
+
+func (block *Block) Serialize() []byte {
+	var buffer bytes.Buffer
+	encoder := gob.NewEncoder(&buffer)
+	err := encoder.Encode(block)
+	if err != nil {
+		log.Panic(err)
+	}
+	return buffer.Bytes()
+}
+
+func DeSerializeBlock(blockBytes []byte) *Block {
+	var block Block
+	var reader = bytes.NewReader(blockBytes)
+	decoder := gob.NewDecoder(reader)
+	err := decoder.Decode(&block)
+	if err != nil {
+		log.Panic(err)
+	}
+	return &block
 }

@@ -7,6 +7,7 @@ import (
 	"math/big"
 )
 
+// ProofOfWork 经济学上认为，理性的人都是逐利的，PoW抑制了节点的恶意动机
 type ProofOfWork struct {
 	Block  *Block   // block to validate
 	Target *big.Int // target hash

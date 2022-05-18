@@ -4,5 +4,5 @@ package Persistence
 	boltDB uses bucket + bytes kV pair
 */
 
-const DBName = "blockChainDB"
+const DBName = "blockChain.db"
 const TableName = "blocks"

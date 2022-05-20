@@ -9,7 +9,7 @@ import (
 	"smallPublicChain/entities/Persistence"
 )
 
-const DBFullName = "entities/Persistence/" + Persistence.DBName
+const DBFullName = Persistence.DBName
 
 type Blockchain struct {
 	Tip     []byte // last block's Hash
@@ -27,8 +27,7 @@ func initializeBlockChain(genesisDataStr string) *Blockchain {
 	genesisBlock := CreateGenesisBlock(genesisDataStr)
 	db, err := bolt.Open(DBFullName, 0600, nil)
 	if err != nil {
-		log.Fatal("Not opening db")
-		return nil
+		log.Fatal(err)
 	}
 
 	err = db.Update(func(tx *bolt.Tx) error {
@@ -58,7 +57,7 @@ func initializeBlockChain(genesisDataStr string) *Blockchain {
 func getBlockChainFromDB() *Blockchain {
 	db, err := bolt.Open(DBFullName, 0600, nil)
 	if err != nil {
-		log.Fatal("Not opening db")
+		log.Fatal(err)
 		return nil
 	}
 
@@ -72,7 +71,7 @@ func getBlockChainFromDB() *Blockchain {
 	})
 
 	if err != nil {
-		log.Panic("Fail to read block chain")
+		log.Panic(err)
 	}
 
 	lastBlock := DeSerializeBlock(lastBlockBytes)
@@ -128,4 +127,12 @@ func (bc *Blockchain) PrintChain() {
 			break
 		}
 	}
+}
+
+func GetBlockChain() *Blockchain {
+	if !dbExist() {
+		fmt.Printf("No BlockChain Object On Disk")
+		return nil
+	}
+	return getBlockChainFromDB()
 }

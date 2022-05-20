@@ -12,7 +12,13 @@ const DBPath = "entities/Persistence/blockChain"
 func main() {
 	//testDB()
 	//testSerialize()
-	testBlockChainBasic()
+	//testBlockChainBasic()
+	testCLI()
+}
+
+func testCLI() {
+	cli := business.CLI{}
+	cli.Run()
 }
 
 func testBlockChainBasic() {

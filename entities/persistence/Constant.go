@@ -1,4 +1,4 @@
-package Persistence
+package persistence
 
 /*
 	boltDB uses bucket + bytes kV pair

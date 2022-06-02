@@ -3,7 +3,7 @@ package business
 import (
 	"github.com/boltdb/bolt"
 	"log"
-	"smallPublicChain/entities/Persistence"
+	"smallPublicChain/entities/persistence"
 )
 
 type BlockChainIterator struct {
@@ -14,7 +14,7 @@ type BlockChainIterator struct {
 func (it *BlockChainIterator) Next() *Block {
 	var curBlock *Block
 	err := it.BlockDB.View(func(tx *bolt.Tx) error {
-		bucket := tx.Bucket([]byte(Persistence.TableName))
+		bucket := tx.Bucket([]byte(persistence.TableName))
 		if bucket != nil {
 			blockBytes := bucket.Get(it.CurrentHash)
 			curBlock = DeSerializeBlock(blockBytes)

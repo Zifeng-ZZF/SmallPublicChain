@@ -7,10 +7,10 @@ import (
 	"log"
 	"math/big"
 	"os"
-	"smallPublicChain/entities/Persistence"
+	"smallPublicChain/entities/persistence"
 )
 
-const DBFullName = Persistence.DBName
+const DBFullName = persistence.DBName
 
 type Blockchain struct {
 	Tip     []byte // last block's Hash
@@ -35,7 +35,7 @@ func initializeBlockChain(address string) *Blockchain {
 	}
 
 	err = db.Update(func(tx *bolt.Tx) error {
-		tbNameBytes := []byte(Persistence.TableName)
+		tbNameBytes := []byte(persistence.TableName)
 		bucket, e := tx.CreateBucket(tbNameBytes)
 		if e != nil {
 			log.Panic("create fail")
@@ -72,7 +72,7 @@ func getBlockChainFromDB() *Blockchain {
 
 	var lastBlockBytes []byte
 	err = db.View(func(tx *bolt.Tx) error {
-		bucket := tx.Bucket([]byte(Persistence.TableName))
+		bucket := tx.Bucket([]byte(persistence.TableName))
 		if bucket != nil {
 			lastBlockBytes = bucket.Get([]byte("l"))
 		}
@@ -135,7 +135,7 @@ func collectUTXOs(tx *Transaction, unspentList []*UTXO, spentMap map[string][]in
 
 func (bc *Blockchain) AddNewBlock(txs []*Transaction) {
 	err := bc.BlockDB.Update(func(tx *bolt.Tx) error {
-		bucket := tx.Bucket([]byte(Persistence.TableName))
+		bucket := tx.Bucket([]byte(persistence.TableName))
 		lastBlockBytes := bucket.Get(bc.Tip)
 		lastBlock := DeSerializeBlock(lastBlockBytes)
 		block := NewBlock(txs, lastBlock.Hash, lastBlock.Height+1)

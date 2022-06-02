@@ -7,7 +7,7 @@ import (
 	"smallPublicChain/entities/business"
 )
 
-const DBPath = "entities/Persistence/blockChain"
+const DBPath = "entities/persistence/blockChain"
 
 func main() {
 	//testDB()

@@ -1,4 +1,4 @@
-package txBuzzi
+package business
 
 type TxInput struct {
 	TxId      []byte // transaction id

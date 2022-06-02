@@ -12,7 +12,8 @@ type CLI struct {
 }
 
 const createChainName = "create_blockchain"
-const addBlockName = "add_block"
+
+//const addBlockName = "add_block"
 const printChainName = "print_chain"
 
 func (cli *CLI) Run() {
@@ -20,11 +21,11 @@ func (cli *CLI) Run() {
 
 	// configuring cmd
 	createChainCmd := flag.NewFlagSet(createChainName, flag.ExitOnError)
-	addBlockCmd := flag.NewFlagSet(addBlockName, flag.ExitOnError)
+	//addBlockCmd := flag.NewFlagSet(addBlockName, flag.ExitOnError)
 	printChainCmd := flag.NewFlagSet(printChainName, flag.ExitOnError)
 
 	createDataPtr := createChainCmd.String("data", "Default", "Genesis Block Data")
-	addBlockDataPtr := addBlockCmd.String("data", "Default", "Add New Block Data")
+	//addBlockDataPtr := addBlockCmd.String("data", "Default", "Add New Block Data")
 
 	command := os.Args[1]
 	switch command {
@@ -33,11 +34,11 @@ func (cli *CLI) Run() {
 		if err != nil {
 			log.Panic(err)
 		}
-	case addBlockName:
-		err := addBlockCmd.Parse(os.Args[2:])
-		if err != nil {
-			log.Panic(err)
-		}
+	//case addBlockName:
+	//	err := addBlockCmd.Parse(os.Args[2:])
+	//	if err != nil {
+	//		log.Panic(err)
+	//	}
 	case printChainName:
 		err := printChainCmd.Parse(os.Args[2:])
 		if err != nil {
@@ -56,13 +57,13 @@ func (cli *CLI) Run() {
 		cli.createGenesisBlockchain(*createDataPtr)
 	}
 
-	if addBlockCmd.Parsed() {
-		if *addBlockDataPtr == "" {
-			printUsage()
-			os.Exit(1)
-		}
-		cli.addBlock(*addBlockDataPtr)
-	}
+	//if addBlockCmd.Parsed() {
+	//	if *addBlockDataPtr == "" {
+	//		printUsage()
+	//		os.Exit(1)
+	//	}
+	//	cli.addBlock(*addBlockDataPtr)
+	//}
 
 	if printChainCmd.Parsed() {
 		cli.printChain()
@@ -79,7 +80,7 @@ func validateArgs() {
 func printUsage() {
 	fmt.Println("Usage:")
 	fmt.Println("\t" + createChainName + " -data DATA -- Create Genesis Block")
-	fmt.Println("\t" + addBlockName + " -data Data -- Add Transaction Data")
+	//fmt.Println("\t" + addBlockName + " -data Data -- Add Transaction Data")
 	fmt.Println("\t" + printChainName + " -- Print Information")
 }
 
@@ -87,13 +88,13 @@ func (cli *CLI) createGenesisBlockchain(data string) {
 	CreateBlockChain(data)
 }
 
-func (cli *CLI) addBlock(data string) {
+func (cli *CLI) addBlock(txs []*Transaction) {
 	bc := GetBlockChain()
 	if bc == nil {
 		fmt.Printf("No genesis block. Failed.")
 		os.Exit(1)
 	}
-	bc.AddNewBlock(data)
+	bc.AddNewBlock(txs)
 	defer bc.BlockDB.Close()
 }
 

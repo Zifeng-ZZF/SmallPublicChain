@@ -5,20 +5,19 @@ import (
 	"crypto/sha256"
 	"encoding/gob"
 	"log"
-	"smallPublicChain/entities/business/txBuzzi"
 	"time"
 )
 
 type Block struct {
 	Height        int64
 	PrevBlockHash []byte
-	Txs           []*txBuzzi.Transaction
+	Txs           []*Transaction
 	TimeStamp     int64
 	Hash          []byte
 	Nuance        int64
 }
 
-func NewBlock(txs []*txBuzzi.Transaction, prevBlock []byte, height int64) *Block {
+func NewBlock(txs []*Transaction, prevBlock []byte, height int64) *Block {
 	currentTime := time.Now().Unix()
 	block := &Block{height, prevBlock, txs, currentTime, nil, 0}
 	pow := NewProofOfWork(block)
@@ -28,7 +27,7 @@ func NewBlock(txs []*txBuzzi.Transaction, prevBlock []byte, height int64) *Block
 	return block
 }
 
-func CreateGenesisBlock(txs []*txBuzzi.Transaction) *Block {
+func CreateGenesisBlock(txs []*Transaction) *Block {
 	return NewBlock(txs, make([]byte, 32, 32), 0)
 }
 

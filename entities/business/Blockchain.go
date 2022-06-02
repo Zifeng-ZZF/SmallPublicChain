@@ -1,13 +1,13 @@
 package business
 
 import (
+	"encoding/hex"
 	"fmt"
 	"github.com/boltdb/bolt"
 	"log"
 	"math/big"
 	"os"
 	"smallPublicChain/entities/Persistence"
-	"smallPublicChain/entities/business/txBuzzi"
 )
 
 const DBFullName = Persistence.DBName
@@ -27,8 +27,8 @@ func CreateBlockChain(address string) *Blockchain {
 }
 
 func initializeBlockChain(address string) *Blockchain {
-	coinbase := txBuzzi.NewCoinbaseTransaction(address)
-	genesisBlock := CreateGenesisBlock([]*txBuzzi.Transaction{coinbase})
+	coinbase := NewCoinbaseTransaction(address)
+	genesisBlock := CreateGenesisBlock([]*Transaction{coinbase})
 	db, err := bolt.Open(DBFullName, 0600, nil)
 	if err != nil {
 		log.Fatal(err)
@@ -58,6 +58,11 @@ func initializeBlockChain(address string) *Blockchain {
 	return &Blockchain{genesisBlock.Hash, db}
 }
 
+func dbExist() bool {
+	_, err := os.Stat(DBFullName)
+	return !os.IsNotExist(err)
+}
+
 func getBlockChainFromDB() *Blockchain {
 	db, err := bolt.Open(DBFullName, 0600, nil)
 	if err != nil {
@@ -82,7 +87,53 @@ func getBlockChainFromDB() *Blockchain {
 	return &Blockchain{lastBlock.Hash, db}
 }
 
-func (bc *Blockchain) AddNewBlock(txs []*txBuzzi.Transaction) {
+func GetBlockChain() *Blockchain {
+	if !dbExist() {
+		fmt.Printf("No BlockChain Object On Disk")
+		return nil
+	}
+	return getBlockChainFromDB()
+}
+
+func collectUTXOs(tx *Transaction, unspentList []*UTXO, spentMap map[string][]int, address string) []*UTXO {
+	if !tx.IsCoinbase() {
+		for _, in := range tx.TxIns {
+			if in.UnlockScript(address) {
+				key := hex.EncodeToString(in.TxId)
+				spentMap[key] = append(spentMap[key], in.Output)
+			}
+		}
+	}
+	// prev tx's output's index & output
+	for idx, out := range tx.TxOuts {
+		if out.UnlockScript(address) {
+			if len(spentMap) == 0 {
+				utxo := &UTXO{tx.TxId, idx, out}
+				unspentList = append(unspentList, utxo)
+				continue
+			}
+
+			var hasSpent = false
+			for txIdx, outlist := range spentMap {
+				for _, outIdx := range outlist {
+					// if the same tx, and spent idx == prev out idx, then it is spent
+					if txIdx == hex.EncodeToString(tx.TxId) && outIdx == idx {
+						hasSpent = true
+					}
+				}
+			}
+			if !hasSpent {
+				utxo := &UTXO{tx.TxId, idx, out}
+				unspentList = append(unspentList, utxo)
+			}
+		}
+	}
+	return unspentList
+}
+
+// -------------------------------------------- Instance methods --------------------------------------------------
+
+func (bc *Blockchain) AddNewBlock(txs []*Transaction) {
 	err := bc.BlockDB.Update(func(tx *bolt.Tx) error {
 		bucket := tx.Bucket([]byte(Persistence.TableName))
 		lastBlockBytes := bucket.Get(bc.Tip)
@@ -104,13 +155,33 @@ func (bc *Blockchain) AddNewBlock(txs []*txBuzzi.Transaction) {
 	}
 }
 
-func (bc *Blockchain) GetIterator() *BlockChainIterator {
-	return &BlockChainIterator{CurrentHash: bc.Tip, BlockDB: bc.BlockDB}
+func (bc *Blockchain) GetUnspentUTXOsList(address string, txs []*Transaction) []*UTXO {
+	var unspent []*UTXO
+	var spentUXTO = make(map[string][]int)
+
+	// 1. find txs not in the blockchain yet
+	for i := len(txs) - 1; i >= 0; i-- {
+		unspent = collectUTXOs(txs[i], unspent, spentUXTO, address)
+	}
+
+	// 2. find txs in the blockchain (DB)
+	it := bc.GetIterator()
+	for {
+		b := it.Next()
+		for i := len(b.Txs) - 1; i >= 0; i-- {
+			unspent = collectUTXOs(b.Txs[i], unspent, spentUXTO, address)
+		}
+		hashInt := new(big.Int)
+		hashInt.SetBytes(b.PrevBlockHash)
+		if hashInt.Cmp(big.NewInt(0)) == 0 {
+			break
+		}
+	}
+	return unspent
 }
 
-func dbExist() bool {
-	_, err := os.Stat(DBFullName)
-	return !os.IsNotExist(err)
+func (bc *Blockchain) GetIterator() *BlockChainIterator {
+	return &BlockChainIterator{CurrentHash: bc.Tip, BlockDB: bc.BlockDB}
 }
 
 func (bc *Blockchain) PrintChain() {
@@ -146,12 +217,4 @@ func (bc *Blockchain) PrintChain() {
 			break
 		}
 	}
-}
-
-func GetBlockChain() *Blockchain {
-	if !dbExist() {
-		fmt.Printf("No BlockChain Object On Disk")
-		return nil
-	}
-	return getBlockChainFromDB()
 }

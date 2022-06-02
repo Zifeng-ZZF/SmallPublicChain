@@ -1,11 +1,10 @@
-package txBuzzi
+package business
 
 import (
 	"bytes"
 	"crypto/sha1"
 	"encoding/gob"
 	"log"
-	"smallPublicChain/entities/business"
 	"time"
 )
 
@@ -36,9 +35,13 @@ func (tx *Transaction) HashTransactionId() {
 		log.Panic(err)
 	}
 	buffBytes := bytes.Join([][]byte{
-		business.GetIntBytes(time.Now().Unix()),
+		GetIntBytes(time.Now().Unix()),
 		buffer.Bytes(),
 	}, []byte{})
 	hash := sha1.Sum(buffBytes)
 	tx.TxId = hash[:]
+}
+
+func (tx *Transaction) IsCoinbase() bool {
+	return len(tx.TxIns[0].TxId) == 0 && tx.TxIns[0].Output == -1
 }

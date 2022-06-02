@@ -1,4 +1,4 @@
-package txBuzzi
+package business
 
 // TxOutput is indivisible
 type TxOutput struct {

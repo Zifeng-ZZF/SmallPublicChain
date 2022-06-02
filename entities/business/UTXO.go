@@ -1,4 +1,4 @@
-package txBuzzi
+package business
 
 type UTXO struct {
 	TxId  []byte    // txId from which

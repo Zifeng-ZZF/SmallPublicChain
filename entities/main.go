@@ -23,9 +23,9 @@ func testCLI() {
 
 func testBlockChainBasic() {
 	blockChain := business.CreateBlockChain("Genesis block")
-	blockChain.AddNewBlock("a sends 500 to b")
-	blockChain.AddNewBlock("c sends 10000 to b")
-	blockChain.AddNewBlock("a sends 100 to c")
+	//blockChain.AddNewBlock("a sends 500 to b")
+	//blockChain.AddNewBlock("c sends 10000 to b")
+	//blockChain.AddNewBlock("a sends 100 to c")
 	blockChain.PrintChain()
 }
 
@@ -99,52 +99,52 @@ func testDB() {
 	}
 }
 
-func testSerialize() {
-	block := business.NewBlock("test", make([]byte, 32, 32), 0)
-	db, err := bolt.Open(DBPath, 0600, nil)
-	if err != nil {
-		log.Fatal(err)
-		return
-	}
-	defer db.Close()
-
-	// adding serialized block
-	err = db.Update(func(tx *bolt.Tx) error {
-		bucket := tx.Bucket([]byte("s"))
-		if bucket == nil {
-			bucket, err = tx.CreateBucket([]byte("s"))
-			if err != nil {
-				log.Panic("Fail creating bucket")
-				return err
-			}
-		}
-		blockBytes := block.Serialize()
-		err = bucket.Put([]byte("l"), blockBytes)
-		if err != nil {
-			log.Panic("Fail putting")
-			return err
-		}
-		return nil
-	})
-
-	if err != nil {
-		log.Panic(err)
-		return
-	}
-
-	err = db.View(func(tx *bolt.Tx) error {
-		bucket := tx.Bucket([]byte("s"))
-		if bucket == nil {
-			log.Panic("No such bucket")
-			return bolt.ErrBucketExists
-		}
-		blockBytes := bucket.Get([]byte("l"))
-		if blockBytes == nil {
-			log.Panic("No such key")
-			return bolt.ErrInvalid
-		}
-		block := business.DeSerializeBlock(blockBytes)
-		fmt.Printf("deserialized block hash= %x\n", block.Hash)
-		return nil
-	})
-}
+//func testSerialize() {
+//	block := business.NewBlock("test", make([]byte, 32, 32), 0)
+//	db, err := bolt.Open(DBPath, 0600, nil)
+//	if err != nil {
+//		log.Fatal(err)
+//		return
+//	}
+//	defer db.Close()
+//
+//	// adding serialized block
+//	err = db.Update(func(tx *bolt.Tx) error {
+//		bucket := tx.Bucket([]byte("s"))
+//		if bucket == nil {
+//			bucket, err = tx.CreateBucket([]byte("s"))
+//			if err != nil {
+//				log.Panic("Fail creating bucket")
+//				return err
+//			}
+//		}
+//		blockBytes := block.Serialize()
+//		err = bucket.Put([]byte("l"), blockBytes)
+//		if err != nil {
+//			log.Panic("Fail putting")
+//			return err
+//		}
+//		return nil
+//	})
+//
+//	if err != nil {
+//		log.Panic(err)
+//		return
+//	}
+//
+//	err = db.View(func(tx *bolt.Tx) error {
+//		bucket := tx.Bucket([]byte("s"))
+//		if bucket == nil {
+//			log.Panic("No such bucket")
+//			return bolt.ErrBucketExists
+//		}
+//		blockBytes := bucket.Get([]byte("l"))
+//		if blockBytes == nil {
+//			log.Panic("No such key")
+//			return bolt.ErrInvalid
+//		}
+//		block := business.DeSerializeBlock(blockBytes)
+//		fmt.Printf("deserialized block hash= %x\n", block.Hash)
+//		return nil
+//	})
+//}

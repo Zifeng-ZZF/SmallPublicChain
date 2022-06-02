@@ -41,9 +41,9 @@ func (pow *ProofOfWork) run() ([]byte, int64) {
 
 func (pow *ProofOfWork) prepareBlockDataWithNuance(nuance int64) []byte {
 	b := pow.Block
-	heightBytes := getIntBytes(b.Height)
-	timeBytes := getIntBytes(b.TimeStamp)
-	nuanceBytes := getIntBytes(nuance)
+	heightBytes := GetIntBytes(b.Height)
+	timeBytes := GetIntBytes(b.TimeStamp)
+	nuanceBytes := GetIntBytes(nuance)
 	data := bytes.Join([][]byte{
 		heightBytes,
 		timeBytes,

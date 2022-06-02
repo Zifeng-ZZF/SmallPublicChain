@@ -7,6 +7,7 @@ import (
 	"math/big"
 	"os"
 	"smallPublicChain/entities/Persistence"
+	"smallPublicChain/entities/business/txBuzzi"
 )
 
 const DBFullName = Persistence.DBName
@@ -16,15 +17,18 @@ type Blockchain struct {
 	BlockDB *bolt.DB
 }
 
-func CreateBlockChain(genesisDataStr string) *Blockchain {
+func CreateBlockChain(address string) *Blockchain {
 	if !dbExist() {
-		return initializeBlockChain(genesisDataStr)
+		fmt.Printf("Creating genesis block.. DB not exist\n\n")
+		return initializeBlockChain(address)
 	}
+	fmt.Printf("Db exists. Getting block from DB...\n\n")
 	return getBlockChainFromDB()
 }
 
-func initializeBlockChain(genesisDataStr string) *Blockchain {
-	genesisBlock := CreateGenesisBlock(genesisDataStr)
+func initializeBlockChain(address string) *Blockchain {
+	coinbase := txBuzzi.NewCoinbaseTransaction(address)
+	genesisBlock := CreateGenesisBlock([]*txBuzzi.Transaction{coinbase})
 	db, err := bolt.Open(DBFullName, 0600, nil)
 	if err != nil {
 		log.Fatal(err)
@@ -78,12 +82,12 @@ func getBlockChainFromDB() *Blockchain {
 	return &Blockchain{lastBlock.Hash, db}
 }
 
-func (bc *Blockchain) AddNewBlock(data string) {
+func (bc *Blockchain) AddNewBlock(txs []*txBuzzi.Transaction) {
 	err := bc.BlockDB.Update(func(tx *bolt.Tx) error {
 		bucket := tx.Bucket([]byte(Persistence.TableName))
 		lastBlockBytes := bucket.Get(bc.Tip)
 		lastBlock := DeSerializeBlock(lastBlockBytes)
-		block := NewBlock(data, lastBlock.Hash, lastBlock.Height+1)
+		block := NewBlock(txs, lastBlock.Hash, lastBlock.Height+1)
 		if bucket != nil {
 			blockBytes := block.Serialize()
 			e := bucket.Put(block.Hash, blockBytes)
@@ -120,7 +124,7 @@ func (bc *Blockchain) PrintChain() {
 		fmt.Printf("Height=%d\n", cur.Height)
 		fmt.Printf("TimeStamp=%d\n", cur.TimeStamp)
 		fmt.Printf("Nuance=%d\n", cur.Nuance)
-		fmt.Printf("Data=%s\n", cur.Data)
+		//fmt.Printf("Data=%s\n", cur.Data)
 
 		hashInt.SetBytes(cur.PrevBlockHash)
 		if hashInt.Cmp(zeroInt) == 0 {

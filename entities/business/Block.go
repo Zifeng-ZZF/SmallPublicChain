@@ -4,21 +4,22 @@ import (
 	"bytes"
 	"encoding/gob"
 	"log"
+	"smallPublicChain/entities/business/txBuzzi"
 	"time"
 )
 
 type Block struct {
 	Height        int64
 	PrevBlockHash []byte
-	Data          []byte
+	Txs           []*txBuzzi.Transaction
 	TimeStamp     int64
 	Hash          []byte
 	Nuance        int64
 }
 
-func NewBlock(data string, prevBlock []byte, height int64) *Block {
+func NewBlock(txs []*txBuzzi.Transaction, prevBlock []byte, height int64) *Block {
 	currentTime := time.Now().Unix()
-	block := &Block{height, prevBlock, []byte(data), currentTime, nil, 0}
+	block := &Block{height, prevBlock, txs, currentTime, nil, 0}
 	pow := NewProofOfWork(block)
 	hash, nuance := pow.run()
 	block.Hash = hash
@@ -26,23 +27,8 @@ func NewBlock(data string, prevBlock []byte, height int64) *Block {
 	return block
 }
 
-//func (b *Block) SetHash() {
-//	heightBytes := getIntBytes(b.Height)
-//	timeString := strconv.FormatInt(b.TimeStamp, 2)
-//	timeBytes := []byte(timeString)
-//	bytesList := [][]byte{
-//		heightBytes,
-//		timeBytes,
-//		b.PrevBlockHash,
-//		b.Data,
-//	}
-//	blockBytes := bytes.Join(bytesList, []byte{})
-//	hash := sha256.Sum256(blockBytes)
-//	b.Hash = hash[:] // deep copy
-//}
-
-func CreateGenesisBlock(data string) *Block {
-	return NewBlock(data, make([]byte, 32, 32), 0)
+func CreateGenesisBlock(txs []*txBuzzi.Transaction) *Block {
+	return NewBlock(txs, make([]byte, 32, 32), 0)
 }
 
 func (block *Block) Serialize() []byte {

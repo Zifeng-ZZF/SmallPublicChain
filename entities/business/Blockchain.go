@@ -124,8 +124,23 @@ func (bc *Blockchain) PrintChain() {
 		fmt.Printf("Height=%d\n", cur.Height)
 		fmt.Printf("TimeStamp=%d\n", cur.TimeStamp)
 		fmt.Printf("Nuance=%d\n", cur.Nuance)
-		//fmt.Printf("Data=%s\n", cur.Data)
+		fmt.Printf("Transactions:\n")
+		for _, tx := range cur.Txs {
+			fmt.Printf("\t\tTransaction ID=%x\n", tx.TxId)
+			fmt.Printf("\t\tInputs:\n")
+			for _, in := range tx.TxIns {
+				fmt.Printf("\t\t\ttxId=%x\n", in.TxId)
+				fmt.Printf("\t\t\toutIdx=%d\n", in.Output)
+				fmt.Printf("\t\t\tscriptSig=%s\n", in.ScriptSig)
+			}
+			fmt.Printf("\t\tOutputs:\n")
+			for _, out := range tx.TxOuts {
+				fmt.Printf("\t\t\tvalue=%d\n", out.Value)
+				fmt.Printf("\t\t\tscriptPubKey=%s\n", out.ScriptPubKey)
+			}
+		}
 
+		// iterate until prev hash is zero (which is genesis)
 		hashInt.SetBytes(cur.PrevBlockHash)
 		if hashInt.Cmp(zeroInt) == 0 {
 			break

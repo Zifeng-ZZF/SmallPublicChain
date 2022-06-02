@@ -2,6 +2,7 @@ package business
 
 import (
 	"bytes"
+	"crypto/sha256"
 	"encoding/gob"
 	"log"
 	"smallPublicChain/entities/business/txBuzzi"
@@ -29,6 +30,17 @@ func NewBlock(txs []*txBuzzi.Transaction, prevBlock []byte, height int64) *Block
 
 func CreateGenesisBlock(txs []*txBuzzi.Transaction) *Block {
 	return NewBlock(txs, make([]byte, 32, 32), 0)
+}
+
+func (block *Block) HashTransactions() []byte {
+	// combine transactions' ids, which are hashes of that transaction
+	var txHashes [][]byte
+	for _, tx := range block.Txs {
+		txHashes = append(txHashes, tx.TxId)
+	}
+	allBytes := bytes.Join(txHashes, []byte{})
+	hash := sha256.Sum256(allBytes)
+	return hash[:]
 }
 
 func (block *Block) Serialize() []byte {

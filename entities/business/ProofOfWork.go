@@ -49,7 +49,7 @@ func (pow *ProofOfWork) prepareBlockDataWithNuance(nuance int64) []byte {
 		timeBytes,
 		nuanceBytes,
 		b.PrevBlockHash,
-		b.Data,
+		b.HashTransactions(),
 	}, []byte{})
 	return data
 }
